@@ -1,9 +1,11 @@
+use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::env;
 
 use crate::AppState;
 
 pub async fn init_app_state() -> AppState {
+	dotenv().ok();
 	let dbpool = get_pool().await;
 	AppState { dbpool }
 }
