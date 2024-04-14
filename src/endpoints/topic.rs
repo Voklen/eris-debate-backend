@@ -1,8 +1,11 @@
+use std::rc::Rc;
+
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use base64::{engine, Engine};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::PgPool;
+use tokio::join;
 
 use crate::{badRequest, unwrap_or_esalate};
 use crate::{internalServerError, unauthorized, AppState};
@@ -12,6 +15,13 @@ struct ArgumentsRequest {
 	// title: String,
 }
 
+struct Argument {
+	id: i64,
+	parent: i64,
+	body: String,
+}
+
+#[derive(Serialize)]
 struct TopArgument {
 	id: i64,
 	body: String,
@@ -22,8 +32,8 @@ struct TopicArguments {
 	against_argument: TopArgument,
 }
 
-#[get("/arguments")]
-async fn arguments_endpoint(
+#[get("/topic")]
+async fn topic_endpoint(
 	req: HttpRequest,
 	title_req: web::Query<ArgumentsRequest>,
 	app_state: web::Data<AppState>,
@@ -43,11 +53,19 @@ async fn arguments_endpoint(
 	let id = 1;
 	let topic_arguments_result = get_topic_arguments(id, &app_state.dbpool).await;
 	let topic_arguments = unwrap_or_esalate!(topic_arguments_result);
+	let for_arguments_future =
+		get_responce_arguments(topic_arguments.for_argument.id, &app_state.dbpool);
+	let against_arguments_future =
+		get_responce_arguments(topic_arguments.against_argument.id, &app_state.dbpool);
+	let (for_arguments_result, against_arguments_result) =
+		join!(for_arguments_future, against_arguments_future);
+	let for_arguments = unwrap_or_esalate!(for_arguments_result);
+	let against_arguments = unwrap_or_esalate!(against_arguments_result);
 
-	let body = json!([
-		{"body": topic_arguments.for_argument.body},
-		{"body": topic_arguments.against_argument.body}
-	]);
+	let body = json!({
+		"for": for_arguments,
+		"against": against_arguments,
+	});
 	HttpResponse::Ok().body(body.to_string())
 }
 
@@ -75,7 +93,10 @@ async fn check_authorization(
 	}
 }
 
-async fn get_topic_arguments(id: i64, db_pool: &PgPool) -> Result<TopicArguments, HttpResponse> {
+async fn get_topic_arguments(
+	topic_id: i64,
+	db_pool: &PgPool,
+) -> Result<TopicArguments, HttpResponse> {
 	let result = sqlx::query!(
 		"
 		SELECT
@@ -92,7 +113,7 @@ async fn get_topic_arguments(id: i64, db_pool: &PgPool) -> Result<TopicArguments
 		WHERE
 			topics.id = $1;
 		",
-		id
+		topic_id
 	)
 	.fetch_one(db_pool)
 	.await;
@@ -113,4 +134,29 @@ async fn get_topic_arguments(id: i64, db_pool: &PgPool) -> Result<TopicArguments
 		for_argument,
 		against_argument,
 	})
+}
+
+async fn get_responce_arguments(
+	argument_id: i64,
+	db_pool: &PgPool,
+) -> Result<Vec<TopArgument>, HttpResponse> {
+	let result = sqlx::query!(
+		"SELECT id, body FROM arguments WHERE parent = $1",
+		argument_id
+	)
+	.fetch_all(db_pool)
+	.await;
+	let res = match result {
+		Ok(res) => Ok(res),
+		Err(sqlx::Error::RowNotFound) => Err(badRequest!("User not found")),
+		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
+	}?;
+	let arg_vec = res
+		.into_iter()
+		.map(|arg| TopArgument {
+			id: arg.id,
+			body: arg.body,
+		})
+		.collect();
+	Ok(arg_vec)
 }

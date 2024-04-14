@@ -6,16 +6,16 @@ use actix_web::{web, App, HttpServer};
 use database::init_app_state;
 use sqlx::PgPool;
 
-#[path = "endpoints/arguments.rs"]
-mod arguments;
 #[path = "endpoints/users/create.rs"]
 mod create_user;
 #[path = "endpoints/users/login.rs"]
 mod login;
+#[path = "endpoints/topic.rs"]
+mod topic;
 
-use arguments::arguments_endpoint;
 use create_user::create_user_endpoint;
 use login::login_endpoint;
+use topic::topic_endpoint;
 
 #[derive(Clone)]
 struct AppState {
@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.app_data(web::Data::new(app_state.clone()))
 			.wrap(get_cors())
-			.service(arguments_endpoint)
+			.service(topic_endpoint)
 			.service(create_user_endpoint)
 			.service(login_endpoint)
 	})
