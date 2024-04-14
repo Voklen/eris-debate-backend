@@ -1,15 +1,25 @@
-use actix_web::{get, http::header::Header, web, HttpRequest, HttpResponse, Responder};
-use actix_web_httpauth::headers::authorization::{Authorization, Basic};
+use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use base64::{engine, Engine};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 
-use crate::{internalServerError, unauthorized, unwrap_or_esalate, AppState};
+use crate::{badRequest, unwrap_or_esalate};
+use crate::{internalServerError, unauthorized, AppState};
 
 #[derive(Deserialize)]
 struct ArgumentsRequest {
 	// title: String,
+}
+
+struct TopArgument {
+	id: i64,
+	body: String,
+}
+
+struct TopicArguments {
+	for_argument: TopArgument,
+	against_argument: TopArgument,
 }
 
 #[get("/arguments")]
@@ -30,8 +40,14 @@ async fn arguments_endpoint(
 	// 	return unauthorized!("Incorrect username or key");
 	// }
 	// let title = &title_req.title;
-	let short_title = format!("Hello from Actix Rust with Postgresql!");
-	let body = json!([{"body": short_title}]);
+	let id = 1;
+	let topic_arguments_result = get_topic_arguments(id, &app_state.dbpool).await;
+	let topic_arguments = unwrap_or_esalate!(topic_arguments_result);
+
+	let body = json!([
+		{"body": topic_arguments.for_argument.body},
+		{"body": topic_arguments.against_argument.body}
+	]);
 	HttpResponse::Ok().body(body.to_string())
 }
 
@@ -57,4 +73,44 @@ async fn check_authorization(
 		Ok(res) => Ok(res.count >= 1),
 		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
 	}
+}
+
+async fn get_topic_arguments(id: i64, db_pool: &PgPool) -> Result<TopicArguments, HttpResponse> {
+	let result = sqlx::query!(
+		"
+		SELECT
+			for_argument.id AS for_argument_id,
+			for_argument.body AS for_argument_body,
+			against_argument.id AS against_argument_id,
+			against_argument.body AS against_argument_body
+		FROM
+			topics
+		JOIN
+			arguments AS for_argument ON topics.for_argument = for_argument.id
+		JOIN
+			arguments AS against_argument ON topics.against_argument = against_argument.id
+		WHERE
+			topics.id = $1;
+		",
+		id
+	)
+	.fetch_one(db_pool)
+	.await;
+	let res = match result {
+		Ok(res) => Ok(res),
+		Err(sqlx::Error::RowNotFound) => Err(badRequest!("User not found")),
+		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
+	}?;
+	let for_argument = TopArgument {
+		id: res.for_argument_id,
+		body: res.for_argument_body,
+	};
+	let against_argument = TopArgument {
+		id: res.against_argument_id,
+		body: res.against_argument_body,
+	};
+	Ok(TopicArguments {
+		for_argument,
+		against_argument,
+	})
 }
