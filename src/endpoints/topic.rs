@@ -63,8 +63,15 @@ async fn topic_endpoint(
 	let against_arguments = unwrap_or_esalate!(against_arguments_result);
 
 	let body = json!({
-		"for": for_arguments,
-		"against": against_arguments,
+		"for": {
+			"title": topic_arguments.for_argument.body,
+			"arguments": for_arguments
+		},
+		"against": {
+			"title": topic_arguments.against_argument.body,
+			"arguments": against_arguments
+		},
+
 	});
 	HttpResponse::Ok().body(body.to_string())
 }
