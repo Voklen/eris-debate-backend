@@ -1,14 +1,12 @@
-use std::rc::Rc;
-
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use base64::{engine, Engine};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::PgPool;
-use tokio::join;
+use std::rc::Rc;
+use tokio::try_join;
 
-use crate::{badRequest, unwrap_or_esalate};
-use crate::{internalServerError, unauthorized, AppState};
+use crate::{badRequest, internalServerError, unauthorized, unwrap_or_esalate, AppState};
 
 #[derive(Deserialize)]
 struct ArgumentsRequest {
@@ -51,29 +49,34 @@ async fn topic_endpoint(
 	// }
 	// let title = &title_req.title;
 	let id = 1;
-	let topic_arguments_result = get_topic_arguments(id, &app_state.dbpool).await;
-	let topic_arguments = unwrap_or_esalate!(topic_arguments_result);
-	let for_arguments_future =
-		get_responce_arguments(topic_arguments.for_argument.id, &app_state.dbpool);
-	let against_arguments_future =
-		get_responce_arguments(topic_arguments.against_argument.id, &app_state.dbpool);
-	let (for_arguments_result, against_arguments_result) =
-		join!(for_arguments_future, against_arguments_future);
-	let for_arguments = unwrap_or_esalate!(for_arguments_result);
-	let against_arguments = unwrap_or_esalate!(against_arguments_result);
+	let body_result = get_body(id, &app_state.dbpool).await;
+	let body = unwrap_or_esalate!(body_result);
+
+	HttpResponse::Ok().body(body)
+}
+
+async fn get_body(id: i64, dbpool: &PgPool) -> Result<String, HttpResponse> {
+	let topic_arguments = get_topic_arguments(id, dbpool).await?;
+
+	// The arguments against are all those that respond to the for argument
+	let arguments_against_future = get_response_arguments(topic_arguments.for_argument.id, dbpool);
+	// The arguments for are all those that respond to the against argument
+	let arguments_for_future = get_response_arguments(topic_arguments.against_argument.id, dbpool);
+
+	let (arguments_against, arguments_for) =
+		try_join!(arguments_against_future, arguments_for_future)?;
 
 	let body = json!({
 		"for": {
 			"title": topic_arguments.for_argument.body,
-			"arguments": for_arguments
+			"arguments": arguments_for
 		},
 		"against": {
 			"title": topic_arguments.against_argument.body,
-			"arguments": against_arguments
+			"arguments": arguments_against
 		},
-
 	});
-	HttpResponse::Ok().body(body.to_string())
+	Ok(body.to_string())
 }
 
 /// Returns `Ok(true)` if authorized, `Ok(false)` if unauthorized and `Err(_)` on error
@@ -107,10 +110,10 @@ async fn get_topic_arguments(
 	let result = sqlx::query!(
 		"
 		SELECT
-			for_argument.id AS for_argument_id,
-			for_argument.body AS for_argument_body,
-			against_argument.id AS against_argument_id,
-			against_argument.body AS against_argument_body
+			for_argument.id AS for_id,
+			for_argument.body AS for_body,
+			against_argument.id AS against_id,
+			against_argument.body AS against_body
 		FROM
 			topics
 		JOIN
@@ -130,12 +133,12 @@ async fn get_topic_arguments(
 		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
 	}?;
 	let for_argument = TopArgument {
-		id: res.for_argument_id,
-		body: res.for_argument_body,
+		id: res.for_id,
+		body: res.for_body,
 	};
 	let against_argument = TopArgument {
-		id: res.against_argument_id,
-		body: res.against_argument_body,
+		id: res.against_id,
+		body: res.against_body,
 	};
 	Ok(TopicArguments {
 		for_argument,
@@ -143,10 +146,10 @@ async fn get_topic_arguments(
 	})
 }
 
-async fn get_responce_arguments(
+async fn get_response_arguments(
 	argument_id: i64,
 	db_pool: &PgPool,
-) -> Result<Vec<TopArgument>, HttpResponse> {
+) -> Result<Rc<[TopArgument]>, HttpResponse> {
 	let result = sqlx::query!(
 		"SELECT id, body FROM arguments WHERE parent = $1",
 		argument_id
