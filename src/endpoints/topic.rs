@@ -49,8 +49,10 @@ async fn topic_endpoint(
 	// }
 	// let title = &title_req.title;
 	let id = 1;
-	let body_result = get_body(id, &app_state.dbpool).await;
-	let body = unwrap_or_esalate!(body_result);
+	let body = match get_body(id, &app_state.dbpool).await {
+		Ok(res) => res,
+		Err(http_response) => return http_response,
+	};
 
 	HttpResponse::Ok().body(body)
 }
