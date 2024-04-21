@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use std::rc::Rc;
 use tokio::try_join;
 
-use crate::{badRequest, internalServerError, unauthorized, unwrap_or_esalate, AppState};
+use crate::{badRequest, internalServerError, unauthorized, AppState};
 
 #[derive(Deserialize)]
 struct ArgumentsRequest {
@@ -71,10 +71,12 @@ async fn get_body(id: i64, dbpool: &PgPool) -> Result<String, HttpResponse> {
 	let body = json!({
 		"for": {
 			"title": topic_arguments.for_argument.body,
+			"opposingID": topic_arguments.against_argument.id,
 			"arguments": arguments_for
 		},
 		"against": {
 			"title": topic_arguments.against_argument.body,
+			"opposingID": topic_arguments.for_argument.id,
 			"arguments": arguments_against
 		},
 	});
