@@ -18,7 +18,7 @@ struct TopArgument {
 }
 
 #[get("/arguments")]
-async fn arguments_endpoint(
+async fn get_arguments_endpoint(
 	_req: HttpRequest,
 	arguments_req: web::Query<ArgumentsRequest>,
 	app_state: web::Data<AppState>,
