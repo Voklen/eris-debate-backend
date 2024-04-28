@@ -25,7 +25,8 @@ struct TopArgument {
 	body: String,
 }
 
-struct TopicArguments {
+struct Topic {
+	name: String,
 	for_argument: TopArgument,
 	against_argument: TopArgument,
 }
@@ -58,25 +59,26 @@ async fn topic_endpoint(
 }
 
 async fn get_body(id: i64, dbpool: &PgPool) -> Result<String, HttpResponse> {
-	let topic_arguments = get_topic_arguments(id, dbpool).await?;
+	let topic = get_topic_arguments(id, dbpool).await?;
 
 	// The arguments against are all those that respond to the for argument
-	let arguments_against_future = get_response_arguments(topic_arguments.for_argument.id, dbpool);
+	let arguments_against_future = get_response_arguments(topic.for_argument.id, dbpool);
 	// The arguments for are all those that respond to the against argument
-	let arguments_for_future = get_response_arguments(topic_arguments.against_argument.id, dbpool);
+	let arguments_for_future = get_response_arguments(topic.against_argument.id, dbpool);
 
 	let (arguments_against, arguments_for) =
 		try_join!(arguments_against_future, arguments_for_future)?;
 
 	let body = json!({
+		"name": topic.name,
 		"for": {
-			"title": topic_arguments.for_argument.body,
-			"opposingID": topic_arguments.against_argument.id,
+			"title": topic.for_argument.body,
+			"opposingID": topic.against_argument.id,
 			"arguments": arguments_for
 		},
 		"against": {
-			"title": topic_arguments.against_argument.body,
-			"opposingID": topic_arguments.for_argument.id,
+			"title": topic.against_argument.body,
+			"opposingID": topic.for_argument.id,
 			"arguments": arguments_against
 		},
 	});
@@ -107,13 +109,11 @@ async fn check_authorization(
 	}
 }
 
-async fn get_topic_arguments(
-	topic_id: i64,
-	db_pool: &PgPool,
-) -> Result<TopicArguments, HttpResponse> {
+async fn get_topic_arguments(topic_id: i64, db_pool: &PgPool) -> Result<Topic, HttpResponse> {
 	let result = sqlx::query!(
 		"
 		SELECT
+			topics.name AS topic_name,
 			for_argument.id AS for_id,
 			for_argument.body AS for_body,
 			against_argument.id AS against_id,
@@ -144,7 +144,8 @@ async fn get_topic_arguments(
 		id: res.against_id,
 		body: res.against_body,
 	};
-	Ok(TopicArguments {
+	Ok(Topic {
+		name: res.topic_name,
 		for_argument,
 		against_argument,
 	})
