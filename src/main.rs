@@ -6,21 +6,21 @@ use actix_web::{http, web, App, HttpServer};
 use database::init_app_state;
 use sqlx::PgPool;
 
-#[path = "endpoints/users/create.rs"]
-mod create_user;
 #[path = "endpoints/arguments/get.rs"]
 mod get_arguments;
-#[path = "endpoints/users/login.rs"]
+#[path = "endpoints/account/login.rs"]
 mod login;
 #[path = "endpoints/arguments/post.rs"]
 mod post_arguments;
+#[path = "endpoints/account/signup.rs"]
+mod signup;
 #[path = "endpoints/topic.rs"]
 mod topic;
 
-use create_user::create_user_endpoint;
 use get_arguments::get_arguments_endpoint;
 use login::login_endpoint;
 use post_arguments::post_arguments_endpoint;
+use signup::signup_endpoint;
 use topic::topic_endpoint;
 
 #[derive(Clone)]
@@ -38,7 +38,7 @@ async fn main() -> std::io::Result<()> {
 			.app_data(web::Data::new(app_state.clone()))
 			.wrap(get_cors())
 			.service(topic_endpoint)
-			.service(create_user_endpoint)
+			.service(signup_endpoint)
 			.service(login_endpoint)
 			.service(get_arguments_endpoint)
 			.service(post_arguments_endpoint)

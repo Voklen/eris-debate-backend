@@ -87,7 +87,7 @@ async fn get_body(id: i64, dbpool: &PgPool) -> Result<String, HttpResponse> {
 
 /// Returns `Ok(true)` if authorized, `Ok(false)` if unauthorized and `Err(_)` on error
 async fn check_authorization(
-	username: &str,
+	email: &str,
 	session_token: Option<&str>,
 	db_pool: &PgPool,
 ) -> Result<bool, HttpResponse> {
@@ -97,8 +97,8 @@ async fn check_authorization(
 		.decode(token)
 		.or_else(|e| Err(unauthorized!("Session token decode error: {e}")))?;
 	let result = sqlx::query!(
-		r#"SELECT COUNT(1) AS "count!" FROM session_tokens WHERE username=$1 AND token=$2;"#,
-		username,
+		r#"SELECT COUNT(1) AS "count!" FROM session_tokens WHERE email=$1 AND token=$2;"#,
+		email,
 		token_bytes
 	)
 	.fetch_one(db_pool)

@@ -12,17 +12,17 @@ use crate::{badRequest, internalServerError, unwrap_or_esalate};
 
 #[derive(Deserialize)]
 struct LoginRequest {
-	username: String,
+	email: String,
 	password: String,
 }
 
-#[post("/users/login")]
+#[post("/account/login")]
 async fn login_endpoint(
 	form: web::Form<LoginRequest>,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
 	let entered_password = &form.password;
-	let stored_password_result = get_stored_password(&form.username, &app_state.dbpool).await;
+	let stored_password_result = get_stored_password(&form.email, &app_state.dbpool).await;
 	let stored_password = unwrap_or_esalate!(stored_password_result);
 
 	let check_password_result = check_password(entered_password, &stored_password);
@@ -30,19 +30,16 @@ async fn login_endpoint(
 	if !is_correct_password {
 		return badRequest!("Password incorrect");
 	}
-	let session_token_result = create_session_token(&form.username, &app_state.dbpool).await;
+	let session_token_result = create_session_token(&form.email, &app_state.dbpool).await;
 	let session_token = unwrap_or_esalate!(session_token_result);
 	let body = json!({"session_token": session_token});
 	HttpResponse::Ok().body(body.to_string())
 }
 
-async fn get_stored_password(username: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {
-	let result = sqlx::query!(
-		"SELECT password_hash FROM users WHERE username=$1;",
-		username
-	)
-	.fetch_one(db_pool)
-	.await;
+async fn get_stored_password(email: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {
+	let result = sqlx::query!("SELECT password_hash FROM users WHERE email=$1;", email)
+		.fetch_one(db_pool)
+		.await;
 	match result {
 		Ok(res) => Ok(res.password_hash),
 		Err(sqlx::Error::RowNotFound) => Err(badRequest!("User not found")),
@@ -62,12 +59,12 @@ fn check_password(entered_password: &str, stored_password: &str) -> Result<bool,
 	Ok(is_correct_password)
 }
 
-async fn create_session_token(username: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {
+async fn create_session_token(email: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {
 	let mut token = [0u8; 16];
 	OsRng.fill_bytes(&mut token);
 	let result = sqlx::query!(
-		"INSERT INTO session_tokens(username, token) VALUES ($1, $2);",
-		username,
+		"INSERT INTO session_tokens(email, token) VALUES ($1, $2);",
+		email,
 		&token
 	)
 	.execute(db_pool)
