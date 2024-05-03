@@ -1,4 +1,4 @@
-use crate::internalServerError;
+use crate::{badRequest, internalServerError};
 use actix_web::{post, web, HttpResponse, Responder};
 use argon2::{
 	password_hash::{rand_core::OsRng, SaltString},
@@ -45,7 +45,7 @@ fn check_errors(result: Result<PgQueryResult, sqlx::Error>) -> HttpResponse {
 		Err(sqlx::Error::Database(db_error)) => {
 			let unique_violation_error_code = Some(std::borrow::Cow::Borrowed("23505"));
 			if db_error.code() == unique_violation_error_code {
-				return internalServerError!("User already exists");
+				return badRequest!("An account with that email already exists");
 			};
 			internalServerError!("Database error: {}", db_error.message())
 		}
