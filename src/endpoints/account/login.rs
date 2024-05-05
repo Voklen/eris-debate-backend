@@ -18,7 +18,7 @@ struct LoginRequest {
 
 #[post("/account/login")]
 async fn login_endpoint(
-	form: web::Form<LoginRequest>,
+	form: web::Json<LoginRequest>,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
 	let entered_password = &form.password;
@@ -28,7 +28,7 @@ async fn login_endpoint(
 	let check_password_result = check_password(entered_password, &stored_password);
 	let is_correct_password = unwrap_or_esalate!(check_password_result);
 	if !is_correct_password {
-		return badRequest!("Password incorrect");
+		return badRequest!("Incorrect password");
 	}
 	let session_token_result = create_session_token(&form.email, &app_state.dbpool).await;
 	let session_token = unwrap_or_esalate!(session_token_result);
@@ -42,7 +42,9 @@ async fn get_stored_password(email: &str, db_pool: &PgPool) -> Result<String, Ht
 		.await;
 	match result {
 		Ok(res) => Ok(res.password_hash),
-		Err(sqlx::Error::RowNotFound) => Err(badRequest!("User not found")),
+		Err(sqlx::Error::RowNotFound) => {
+			Err(badRequest!("An account with this email does not exist"))
+		}
 		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
 	}
 }
