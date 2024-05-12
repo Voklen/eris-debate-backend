@@ -16,7 +16,7 @@ struct CreateUserRequest {
 	password: String,
 }
 
-#[post("/account/signup")]
+#[post("/signup")]
 async fn signup_endpoint(
 	request: web::Json<CreateUserRequest>,
 	app_state: web::Data<AppState>,

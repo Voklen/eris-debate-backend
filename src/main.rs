@@ -8,11 +8,11 @@ use sqlx::PgPool;
 
 #[path = "endpoints/arguments/get.rs"]
 mod get_arguments;
-#[path = "endpoints/account/login.rs"]
+#[path = "endpoints/login.rs"]
 mod login;
 #[path = "endpoints/arguments/post.rs"]
 mod post_arguments;
-#[path = "endpoints/account/signup.rs"]
+#[path = "endpoints/signup.rs"]
 mod signup;
 #[path = "endpoints/topic.rs"]
 mod topic;
@@ -53,5 +53,6 @@ fn get_cors() -> Cors {
 	Cors::default()
 		.allowed_origin("http://localhost:3000")
 		.allowed_header(http::header::CONTENT_TYPE)
+		.supports_credentials()
 		.allowed_methods(["GET", "POST"])
 }

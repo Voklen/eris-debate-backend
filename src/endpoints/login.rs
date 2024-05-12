@@ -1,9 +1,9 @@
+use actix_web::cookie::CookieBuilder;
 use actix_web::{post, web, HttpResponse, Responder};
 use argon2::password_hash::rand_core::{OsRng, RngCore};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use base64::{engine, Engine};
 use serde::Deserialize;
-use serde_json::json;
 use sqlx::postgres::PgQueryResult;
 use sqlx::PgPool;
 
@@ -16,7 +16,7 @@ struct LoginRequest {
 	password: String,
 }
 
-#[post("/account/login")]
+#[post("/login")]
 async fn login_endpoint(
 	form: web::Json<LoginRequest>,
 	app_state: web::Data<AppState>,
@@ -32,8 +32,12 @@ async fn login_endpoint(
 	}
 	let session_token_result = create_session_token(&form.email, &app_state.dbpool).await;
 	let session_token = unwrap_or_esalate!(session_token_result);
-	let body = json!({"session_token": session_token});
-	HttpResponse::Ok().body(body.to_string())
+	let cookie = CookieBuilder::new("session_token", session_token)
+		.secure(true)
+		.same_site(actix_web::cookie::SameSite::None)
+		.http_only(true)
+		.finish();
+	HttpResponse::Ok().cookie(cookie).finish()
 }
 
 async fn get_stored_password(email: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {

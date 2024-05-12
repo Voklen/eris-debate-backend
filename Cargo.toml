@@ -22,3 +22,7 @@ base64 = "0.21"
 
 # Configuration
 dotenv = "0.15.0"
+
+[dependencies.cookie]
+version = "0.18"
+features = ["secure"]
