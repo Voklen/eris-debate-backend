@@ -22,15 +22,15 @@ async fn login_endpoint(
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
 	let entered_password = &form.password;
-	let stored_password_result = get_stored_password(&form.email, &app_state.dbpool).await;
-	let stored_password = unwrap_or_esalate!(stored_password_result);
+	let id_and_password_result = get_id_and_password(&form.email, &app_state.dbpool).await;
+	let (id, stored_password) = unwrap_or_esalate!(id_and_password_result);
 
 	let check_password_result = check_password(entered_password, &stored_password);
 	let is_correct_password = unwrap_or_esalate!(check_password_result);
 	if !is_correct_password {
 		return badRequest!("Incorrect password");
 	}
-	let session_token_result = create_session_token(&form.email, &app_state.dbpool).await;
+	let session_token_result = create_session_token(id, &app_state.dbpool).await;
 	let session_token = unwrap_or_esalate!(session_token_result);
 	let cookie = CookieBuilder::new("session_token", session_token)
 		.secure(true)
@@ -40,12 +40,12 @@ async fn login_endpoint(
 	HttpResponse::Ok().cookie(cookie).finish()
 }
 
-async fn get_stored_password(email: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {
-	let result = sqlx::query!("SELECT password_hash FROM users WHERE email=$1;", email)
+async fn get_id_and_password(email: &str, db_pool: &PgPool) -> Result<(i64, String), HttpResponse> {
+	let result = sqlx::query!("SELECT id, password_hash FROM users WHERE email=$1;", email)
 		.fetch_one(db_pool)
 		.await;
 	match result {
-		Ok(res) => Ok(res.password_hash),
+		Ok(res) => Ok((res.id, res.password_hash)),
 		Err(sqlx::Error::RowNotFound) => {
 			Err(badRequest!("An account with this email does not exist"))
 		}
@@ -65,12 +65,12 @@ fn check_password(entered_password: &str, stored_password: &str) -> Result<bool,
 	Ok(is_correct_password)
 }
 
-async fn create_session_token(email: &str, db_pool: &PgPool) -> Result<String, HttpResponse> {
+async fn create_session_token(id: i64, db_pool: &PgPool) -> Result<String, HttpResponse> {
 	let mut token = [0u8; 16];
 	OsRng.fill_bytes(&mut token);
 	let result = sqlx::query!(
-		"INSERT INTO session_tokens(email, token) VALUES ($1, $2);",
-		email,
+		"INSERT INTO session_tokens(id, token) VALUES ($1, $2);",
+		id,
 		&token
 	)
 	.execute(db_pool)

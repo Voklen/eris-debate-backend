@@ -27,9 +27,9 @@ async fn post_arguments_endpoint(
 		Some(cookie) => cookie,
 		None => return unauthorized!("Unauthorized"),
 	};
-	let email_result = get_email(cookie, &app_state.dbpool).await;
-	let email = unwrap_or_esalate!(email_result);
-	let res = create_argument(json, &app_state.dbpool).await;
+	let id_result = check_session(cookie, &app_state.dbpool).await;
+	let id = unwrap_or_esalate!(id_result);
+	let res = create_argument(id, json, &app_state.dbpool).await;
 	match res {
 		Ok(()) => {
 			return HttpResponse::Ok()
@@ -40,17 +40,18 @@ async fn post_arguments_endpoint(
 	}
 }
 
-async fn get_email(cookie: Cookie<'_>, db_pool: &PgPool) -> Result<String, HttpResponse> {
+/// Verifies the session is valid in the database and returns the id of the corresponding user
+async fn check_session(cookie: Cookie<'_>, db_pool: &PgPool) -> Result<i64, HttpResponse> {
 	let base64_decoder = engine::general_purpose::URL_SAFE;
 	let decoded_cookie = base64_decoder.decode(cookie.value()).unwrap();
 	let result = sqlx::query!(
-		"SELECT email FROM session_tokens WHERE token = $1",
+		"SELECT id FROM session_tokens WHERE token = $1",
 		decoded_cookie
 	)
 	.fetch_one(db_pool)
 	.await;
 	match result {
-		Ok(res) => Ok(res.email),
+		Ok(res) => Ok(res.id),
 		Err(sqlx::Error::RowNotFound) => {
 			Err(unauthorized!("Session token does not exist or has expired"))
 		}
@@ -59,13 +60,15 @@ async fn get_email(cookie: Cookie<'_>, db_pool: &PgPool) -> Result<String, HttpR
 }
 
 async fn create_argument(
+	id: i64,
 	request: web::Json<ArgumentsRequest>,
 	db_pool: &PgPool,
 ) -> Result<(), HttpResponse> {
 	let result = sqlx::query!(
-		"INSERT INTO arguments (parent, body) VALUES ($1, $2)",
+		"INSERT INTO arguments (parent, body, created_by) VALUES ($1, $2, $3)",
 		request.parent,
 		request.body,
+		id,
 	)
 	.execute(db_pool)
 	.await;
