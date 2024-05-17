@@ -1,21 +1,15 @@
-use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::PgPool;
 use std::rc::Rc;
 use tokio::try_join;
 
-use crate::{badRequest, internalServerError, AppState};
+use crate::{badRequest, internalServerError, unwrap_or_esalate, AppState};
 
 #[derive(Deserialize)]
 struct ArgumentsRequest {
-	// title: String,
-}
-
-struct Argument {
 	id: i64,
-	parent: i64,
-	body: String,
 }
 
 #[derive(Serialize)]
@@ -32,16 +26,12 @@ struct Topic {
 
 #[get("/topic")]
 async fn topic_endpoint(
-	req: HttpRequest,
 	title_req: web::Query<ArgumentsRequest>,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
-	let id = 1;
-	let body = match get_body(id, &app_state.dbpool).await {
-		Ok(res) => res,
-		Err(http_response) => return http_response,
-	};
-
+	let id = title_req.id;
+	let body_result = get_body(id, &app_state.dbpool).await;
+	let body = unwrap_or_esalate!(body_result);
 	HttpResponse::Ok().body(body)
 }
 

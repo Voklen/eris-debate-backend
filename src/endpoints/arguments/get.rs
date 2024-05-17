@@ -1,4 +1,4 @@
-use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::PgPool;
@@ -19,7 +19,6 @@ struct TopArgument {
 
 #[get("/arguments")]
 async fn get_arguments_endpoint(
-	_req: HttpRequest,
 	arguments_req: web::Query<ArgumentsRequest>,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {

@@ -1,6 +1,6 @@
 use actix_web::{cookie::Cookie, http::header::ContentType, post, web, HttpResponse, Responder};
 use base64::{engine, Engine};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::PgPool;
 
 use crate::{internalServerError, unauthorized, unwrap_or_esalate, AppState};
@@ -8,12 +8,6 @@ use crate::{internalServerError, unauthorized, unwrap_or_esalate, AppState};
 #[derive(Deserialize)]
 struct ArgumentsRequest {
 	parent: i64,
-	body: String,
-}
-
-#[derive(Serialize)]
-struct TopArgument {
-	id: i64,
 	body: String,
 }
 
