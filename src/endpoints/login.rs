@@ -3,6 +3,7 @@ use actix_web::{post, web, HttpResponse, Responder};
 use argon2::password_hash::rand_core::{OsRng, RngCore};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use base64::{engine, Engine};
+use log::{error, warn};
 use serde::Deserialize;
 use sqlx::postgres::PgQueryResult;
 use sqlx::PgPool;
@@ -49,14 +50,22 @@ async fn get_id_and_password(email: &str, db_pool: &PgPool) -> Result<(i64, Stri
 		Err(sqlx::Error::RowNotFound) => {
 			Err(badRequest!("An account with this email does not exist"))
 		}
-		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
+		Err(e) => {
+			warn!("Unexpected error in login: {e}");
+			Err(internalServerError!("Error retrieving user data"))
+		}
 	}
 }
 
 fn check_password(entered_password: &str, stored_password: &str) -> Result<bool, HttpResponse> {
 	let hash = match PasswordHash::new(stored_password) {
 		Ok(hash) => hash,
-		Err(e) => return Err(internalServerError!("Invalid stored password hash: {e}")),
+		Err(e) => {
+			error!("Invalid password hash '{stored_password}' in database: {e}");
+			return Err(internalServerError!(
+				"Error checking password, we're looking into it"
+			));
+		}
 	};
 	let password_bytes = entered_password.as_bytes();
 	let is_correct_password = Argon2::default()
@@ -81,15 +90,16 @@ async fn create_session_token(id: i64, db_pool: &PgPool) -> Result<String, HttpR
 }
 
 fn check_errors(result: Result<PgQueryResult, sqlx::Error>) -> Result<(), HttpResponse> {
-	match result {
-		Ok(res) => success(res),
-		Err(e) => Err(internalServerError!("Error saving session token: {e}")),
-	}
-}
-
-fn success(res: PgQueryResult) -> Result<(), HttpResponse> {
-	match res.rows_affected() {
-		1 => Ok(()),
-		rows => Err(internalServerError!("{rows} rows affected")),
-	}
+	let res = match result {
+		Ok(res) => Ok(res),
+		Err(e) => {
+			warn!("Error saving session token: {e}");
+			Err(internalServerError!("Error saving session token"))
+		}
+	}?;
+	let rows = res.rows_affected();
+	if rows != 1 {
+		error!("{rows} rows affected when saving session token")
+	};
+	Ok(())
 }

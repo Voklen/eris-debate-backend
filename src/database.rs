@@ -11,7 +11,7 @@ pub async fn init_app_state() -> AppState {
 }
 
 async fn get_pool() -> Pool<Postgres> {
-	let url = env::var("DATABASE_URL").unwrap();
+	let url = env::var("DATABASE_URL").expect("env variable DATABASE_URL should be set");
 	PgPoolOptions::new()
 		.max_connections(5)
 		.connect(&url)

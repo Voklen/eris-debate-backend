@@ -4,6 +4,7 @@ use argon2::{
 	password_hash::{rand_core::OsRng, SaltString},
 	Argon2, PasswordHasher,
 };
+use log::{error, warn};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::postgres::PgQueryResult;
@@ -27,7 +28,10 @@ async fn signup_endpoint(
 
 	let password_hash = match argon2.hash_password(password_bytes, &salt) {
 		Ok(hash) => hash.serialize(),
-		Err(e) => return internalServerError!("Error hashing password: {e}"),
+		Err(e) => {
+			error!("Error hashing password: {e}");
+			return internalServerError!("Password error");
+		}
 	};
 	let result = sqlx::query!(
 		"INSERT INTO users(email, password_hash) VALUES ($1, $2);",
@@ -47,9 +51,13 @@ fn check_errors(result: Result<PgQueryResult, sqlx::Error>) -> HttpResponse {
 			if db_error.code() == unique_violation_error_code {
 				return badRequest!("An account with that email already exists");
 			};
-			internalServerError!("Database error: {}", db_error.message())
+			warn!("Database error on creating account: {}", db_error.message());
+			internalServerError!("Error creating account")
 		}
-		Err(e) => internalServerError!("Error inserting query: {e}"),
+		Err(e) => {
+			warn!("Error creating account: {e}");
+			internalServerError!("Error creating account")
+		}
 	}
 }
 
@@ -57,10 +65,10 @@ fn success(res: PgQueryResult) -> HttpResponse {
 	let body = json!({
 		"token": 0
 	});
-	match res.rows_affected() {
-		1 => HttpResponse::Ok().body(body.to_string()),
-		rows => {
-			internalServerError!("{rows} rows affected")
-		}
-	}
+	let rows = res.rows_affected();
+	if rows != 1 {
+		warn!("Unexpected number of rows affected: {rows}");
+		// Return success to user but log unexpected rows affected
+	};
+	HttpResponse::Ok().body(body.to_string())
 }

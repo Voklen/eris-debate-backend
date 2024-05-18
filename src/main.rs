@@ -4,8 +4,11 @@ mod errors;
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use database::init_app_state;
+use log::info;
 use sqlx::PgPool;
 
+#[path = "helper/arguments.rs"]
+mod arguments_helper;
 #[path = "endpoints/arguments/get.rs"]
 mod get_arguments;
 #[path = "endpoints/login.rs"]
@@ -32,6 +35,7 @@ const PORT: u16 = 9000;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+	env_logger::init();
 	let app_state = init_app_state().await;
 	let server = HttpServer::new(move || {
 		App::new()
@@ -45,7 +49,7 @@ async fn main() -> std::io::Result<()> {
 	})
 	.bind(("0.0.0.0", PORT))?
 	.run();
-	println!("Server initialised on port {PORT}!");
+	info!("Server initialised on port {PORT}!");
 	server.await
 }
 

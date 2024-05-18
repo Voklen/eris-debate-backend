@@ -1,7 +1,8 @@
 use actix_web::{cookie::Cookie, http::header::ContentType, post, web, HttpResponse, Responder};
 use base64::{engine, Engine};
+use log::warn;
 use serde::Deserialize;
-use sqlx::PgPool;
+use sqlx::{postgres::PgQueryResult, PgPool};
 
 use crate::{internalServerError, unauthorized, unwrap_or_esalate, AppState};
 
@@ -37,7 +38,8 @@ async fn post_arguments_endpoint(
 /// Verifies the session is valid in the database and returns the id of the corresponding user
 async fn check_session(cookie: Cookie<'_>, db_pool: &PgPool) -> Result<i64, HttpResponse> {
 	let base64_decoder = engine::general_purpose::URL_SAFE;
-	let decoded_cookie = base64_decoder.decode(cookie.value()).unwrap();
+	let cookie_string = cookie.value();
+	let decoded_cookie = base64_decoder.decode(cookie_string).unwrap();
 	let result = sqlx::query!(
 		"SELECT id FROM session_tokens WHERE token = $1",
 		decoded_cookie
@@ -49,7 +51,10 @@ async fn check_session(cookie: Cookie<'_>, db_pool: &PgPool) -> Result<i64, Http
 		Err(sqlx::Error::RowNotFound) => {
 			Err(unauthorized!("Session token does not exist or has expired"))
 		}
-		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
+		Err(e) => {
+			warn!("Error retrieving cookie (cookie={cookie_string}): {e}");
+			Err(internalServerError!("Error retrieving cookie"))
+		}
 	}
 }
 
@@ -66,16 +71,21 @@ async fn create_argument(
 	)
 	.execute(db_pool)
 	.await;
+	check_errors(result)
+}
+
+fn check_errors(result: Result<PgQueryResult, sqlx::Error>) -> Result<(), HttpResponse> {
 	let res = match result {
 		Ok(res) => Ok(res),
-		Err(e) => Err(internalServerError!("Error retrieving user data: {e}")),
+		Err(e) => {
+			warn!("Error creating argument: {e}");
+			Err(internalServerError!("Error creating argument"))
+		}
 	}?;
-	if res.rows_affected() != 1 {
-		println!(
-			"Unexpected number of rows affected: {}",
-			res.rows_affected()
-		);
-		return Err(internalServerError!("Unexpected number of rows affected"));
+	let rows = res.rows_affected();
+	if rows != 1 {
+		warn!("Unexpected number of rows affected: {rows}");
+		// Return success to user but log unexpected rows affected
 	};
 	Ok(())
 }
