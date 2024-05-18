@@ -12,14 +12,15 @@ use sqlx::postgres::PgQueryResult;
 use crate::AppState;
 
 #[derive(Deserialize)]
-struct CreateUserRequest {
+struct SignupRequest {
 	email: String,
+	username: String,
 	password: String,
 }
 
 #[post("/signup")]
 async fn signup_endpoint(
-	request: web::Json<CreateUserRequest>,
+	request: web::Json<SignupRequest>,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
 	let argon2 = Argon2::default();
@@ -34,8 +35,9 @@ async fn signup_endpoint(
 		}
 	};
 	let result = sqlx::query!(
-		"INSERT INTO users(email, password_hash) VALUES ($1, $2);",
+		"INSERT INTO users(email, username, password_hash) VALUES ($1, $2, $3);",
 		request.email,
+		request.username,
 		password_hash.as_str()
 	)
 	.execute(&app_state.dbpool)
@@ -47,9 +49,16 @@ fn check_errors(result: Result<PgQueryResult, sqlx::Error>) -> HttpResponse {
 	match result {
 		Ok(res) => success(res),
 		Err(sqlx::Error::Database(db_error)) => {
-			let unique_violation_error_code = Some(std::borrow::Cow::Borrowed("23505"));
-			if db_error.code() == unique_violation_error_code {
-				return badRequest!("An account with that email already exists");
+			if db_error.is_unique_violation() {
+				match db_error.constraint() {
+					Some("users_email_key") => {
+						return badRequest!("An account with that email already exists")
+					}
+					Some("users_username_key") => {
+						return badRequest!("An account with that username already exists")
+					}
+					_ => {}
+				};
 			};
 			warn!("Database error on creating account: {}", db_error.message());
 			internalServerError!("Error creating account")

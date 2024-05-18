@@ -5,6 +5,7 @@ use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use base64::{engine, Engine};
 use log::{error, warn};
 use serde::Deserialize;
+use serde_json::json;
 use sqlx::postgres::PgQueryResult;
 use sqlx::PgPool;
 
@@ -17,6 +18,12 @@ struct LoginRequest {
 	password: String,
 }
 
+struct User {
+	id: i64,
+	username: String,
+	password: String,
+}
+
 #[post("/login")]
 async fn login_endpoint(
 	form: web::Json<LoginRequest>,
@@ -24,29 +31,39 @@ async fn login_endpoint(
 ) -> impl Responder {
 	let entered_password = &form.password;
 	let id_and_password_result = get_id_and_password(&form.email, &app_state.dbpool).await;
-	let (id, stored_password) = unwrap_or_esalate!(id_and_password_result);
+	let stored_user = unwrap_or_esalate!(id_and_password_result);
 
-	let check_password_result = check_password(entered_password, &stored_password);
+	let check_password_result = check_password(entered_password, &stored_user.password);
 	let is_correct_password = unwrap_or_esalate!(check_password_result);
 	if !is_correct_password {
 		return badRequest!("Incorrect password");
 	}
-	let session_token_result = create_session_token(id, &app_state.dbpool).await;
+	let session_token_result = create_session_token(stored_user.id, &app_state.dbpool).await;
 	let session_token = unwrap_or_esalate!(session_token_result);
 	let cookie = CookieBuilder::new("session_token", session_token)
 		.secure(true)
 		.same_site(actix_web::cookie::SameSite::None)
 		.http_only(true)
 		.finish();
-	HttpResponse::Ok().cookie(cookie).finish()
+	let body = json!({
+		"username": stored_user.username
+	});
+	HttpResponse::Ok().cookie(cookie).body(body.to_string())
 }
 
-async fn get_id_and_password(email: &str, db_pool: &PgPool) -> Result<(i64, String), HttpResponse> {
-	let result = sqlx::query!("SELECT id, password_hash FROM users WHERE email=$1;", email)
-		.fetch_one(db_pool)
-		.await;
+async fn get_id_and_password(email: &str, db_pool: &PgPool) -> Result<User, HttpResponse> {
+	let result = sqlx::query!(
+		"SELECT id, username, password_hash FROM users WHERE email=$1;",
+		email
+	)
+	.fetch_one(db_pool)
+	.await;
 	match result {
-		Ok(res) => Ok((res.id, res.password_hash)),
+		Ok(res) => Ok(User {
+			id: res.id,
+			username: res.username,
+			password: res.password_hash,
+		}),
 		Err(sqlx::Error::RowNotFound) => {
 			Err(badRequest!("An account with this email does not exist"))
 		}
