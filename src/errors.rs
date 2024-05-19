@@ -34,3 +34,12 @@ macro_rules! unauthorized {
 		HttpResponse::Unauthorized().body(body)
 	}};
 }
+
+#[macro_export]
+macro_rules! notFound{
+	($($arg:tt)*) => {{
+		use actix_web::HttpResponse;
+        let body = format!($($arg)*);
+		HttpResponse::NotFound().body(body)
+	}};
+}

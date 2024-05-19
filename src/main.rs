@@ -23,6 +23,8 @@ mod session_helper;
 mod signup;
 #[path = "endpoints/topic.rs"]
 mod topic;
+#[path = "endpoints/topics.rs"]
+mod topics;
 
 use get_arguments::get_arguments_endpoint;
 use login::login_endpoint;
@@ -30,6 +32,7 @@ use logout::logout_endpoint;
 use post_arguments::post_arguments_endpoint;
 use signup::signup_endpoint;
 use topic::topic_endpoint;
+use topics::topics_endpoint;
 
 #[derive(Clone)]
 struct AppState {
@@ -52,6 +55,7 @@ async fn main() -> std::io::Result<()> {
 			.service(get_arguments_endpoint)
 			.service(post_arguments_endpoint)
 			.service(logout_endpoint)
+			.service(topics_endpoint)
 	})
 	.bind(("0.0.0.0", PORT))?
 	.run();
