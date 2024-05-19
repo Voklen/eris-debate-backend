@@ -13,8 +13,12 @@ mod arguments_helper;
 mod get_arguments;
 #[path = "endpoints/login.rs"]
 mod login;
+#[path = "endpoints/logout.rs"]
+mod logout;
 #[path = "endpoints/arguments/post.rs"]
 mod post_arguments;
+#[path = "helper/session.rs"]
+mod session_helper;
 #[path = "endpoints/signup.rs"]
 mod signup;
 #[path = "endpoints/topic.rs"]
@@ -22,6 +26,7 @@ mod topic;
 
 use get_arguments::get_arguments_endpoint;
 use login::login_endpoint;
+use logout::logout_endpoint;
 use post_arguments::post_arguments_endpoint;
 use signup::signup_endpoint;
 use topic::topic_endpoint;
@@ -46,6 +51,7 @@ async fn main() -> std::io::Result<()> {
 			.service(login_endpoint)
 			.service(get_arguments_endpoint)
 			.service(post_arguments_endpoint)
+			.service(logout_endpoint)
 	})
 	.bind(("0.0.0.0", PORT))?
 	.run();
