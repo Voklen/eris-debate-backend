@@ -1,5 +1,5 @@
 use crate::{internalServerError, session_helper::check_session, unwrap_or_esalate, AppState};
-use actix_web::{http::header::ContentType, post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use log::warn;
 use serde::Deserialize;
 use sqlx::{postgres::PgQueryResult, PgPool};
@@ -20,11 +20,7 @@ async fn post_arguments_endpoint(
 	let id = unwrap_or_esalate!(id_result);
 	let res = create_argument(id, json, &app_state.dbpool).await;
 	match res {
-		Ok(()) => {
-			return HttpResponse::Ok()
-				.content_type(ContentType::json())
-				.body("")
-		}
+		Ok(()) => return HttpResponse::Ok().finish(),
 		Err(http_response) => http_response,
 	}
 }
