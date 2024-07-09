@@ -1,7 +1,6 @@
 use actix_web::cookie::CookieBuilder;
 use actix_web::{post, web, HttpResponse, Responder};
 use argon2::password_hash::rand_core::{OsRng, RngCore};
-use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use base64::{engine, Engine};
 use log::{error, warn};
 use serde::Deserialize;
@@ -9,6 +8,7 @@ use serde_json::json;
 use sqlx::postgres::PgQueryResult;
 use sqlx::PgPool;
 
+use crate::hashing_helper::{check_hashes, session_token_hash};
 use crate::AppState;
 use crate::{badRequest, internalServerError, unwrap_or_esalate};
 
@@ -33,7 +33,7 @@ async fn login_endpoint(
 	let id_and_password_result = get_id_and_password(&form.email, &app_state.dbpool).await;
 	let stored_user = unwrap_or_esalate!(id_and_password_result);
 
-	let check_password_result = check_password(entered_password, &stored_user.password);
+	let check_password_result = check_hashes(entered_password.as_bytes(), &stored_user.password);
 	let is_correct_password = unwrap_or_esalate!(check_password_result);
 	if !is_correct_password {
 		return badRequest!("Incorrect password");
@@ -74,30 +74,15 @@ async fn get_id_and_password(email: &str, db_pool: &PgPool) -> Result<User, Http
 	}
 }
 
-fn check_password(entered_password: &str, stored_password: &str) -> Result<bool, HttpResponse> {
-	let hash = match PasswordHash::new(stored_password) {
-		Ok(hash) => hash,
-		Err(e) => {
-			error!("Invalid password hash '{stored_password}' in database: {e}");
-			return Err(internalServerError!(
-				"Error checking password, we're looking into it"
-			));
-		}
-	};
-	let password_bytes = entered_password.as_bytes();
-	let is_correct_password = Argon2::default()
-		.verify_password(password_bytes, &hash)
-		.is_ok();
-	Ok(is_correct_password)
-}
-
 async fn create_session_token(id: i64, db_pool: &PgPool) -> Result<String, HttpResponse> {
 	let mut token = [0u8; 16];
 	OsRng.fill_bytes(&mut token);
+	let token_hash = session_token_hash(&token)?;
+
 	let result = sqlx::query!(
-		"INSERT INTO session_tokens(id, token) VALUES ($1, $2);",
+		"INSERT INTO session_tokens(id, token_hash) VALUES ($1, $2);",
 		id,
-		&token
+		token_hash.to_string()
 	)
 	.execute(db_pool)
 	.await;

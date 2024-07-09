@@ -16,8 +16,8 @@ async fn post_arguments_endpoint(
 	req: actix_web::HttpRequest,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
-	let id_result = check_session(&req, &app_state.dbpool).await;
-	let id = unwrap_or_esalate!(id_result);
+	let check_result = check_session(&req, &app_state.dbpool).await;
+	let id = unwrap_or_esalate!(check_result);
 	let res = create_argument(id, json, &app_state.dbpool).await;
 	match res {
 		Ok(()) => return HttpResponse::Ok().finish(),

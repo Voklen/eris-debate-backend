@@ -11,6 +11,8 @@ use sqlx::PgPool;
 mod arguments_helper;
 #[path = "endpoints/arguments/get.rs"]
 mod get_arguments;
+#[path = "helper/hashing.rs"]
+mod hashing_helper;
 #[path = "endpoints/login.rs"]
 mod login;
 #[path = "endpoints/logout.rs"]

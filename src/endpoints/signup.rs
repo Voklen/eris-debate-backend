@@ -1,15 +1,11 @@
+use crate::hashing_helper::hash_string;
+use crate::AppState;
 use crate::{badRequest, internalServerError};
 use actix_web::{post, web, HttpResponse, Responder};
-use argon2::{
-	password_hash::{rand_core::OsRng, SaltString},
-	Argon2, PasswordHasher,
-};
-use log::{error, warn};
+use log::warn;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::postgres::PgQueryResult;
-
-use crate::AppState;
 
 #[derive(Deserialize)]
 struct SignupRequest {
@@ -23,16 +19,9 @@ async fn signup_endpoint(
 	request: web::Json<SignupRequest>,
 	app_state: web::Data<AppState>,
 ) -> impl Responder {
-	let argon2 = Argon2::default();
-	let salt = SaltString::generate(&mut OsRng);
-	let password_bytes = request.password.as_bytes();
-
-	let password_hash = match argon2.hash_password(password_bytes, &salt) {
-		Ok(hash) => hash.serialize(),
-		Err(e) => {
-			error!("Error hashing password: {e}");
-			return internalServerError!("Password error");
-		}
+	let password_hash = match hash_string(&request.password) {
+		Ok(res) => res,
+		Err(e) => return e,
 	};
 	let result = sqlx::query!(
 		"INSERT INTO users(email, username, password_hash) VALUES ($1, $2, $3);",

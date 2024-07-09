@@ -5,7 +5,8 @@ use log::{error, warn};
 use sqlx::postgres::PgQueryResult;
 use sqlx::PgPool;
 
-use crate::{internalServerError, unwrap_or_esalate};
+use crate::hashing_helper::session_token_hash;
+use crate::{badRequest, internalServerError, unwrap_or_esalate};
 use crate::{unauthorized, AppState};
 
 #[post("/logout")]
@@ -31,10 +32,16 @@ async fn logout_endpoint(
 async fn delete_session_token(cookie: Cookie<'_>, db_pool: &PgPool) -> Result<(), HttpResponse> {
 	let base64_decoder = engine::general_purpose::URL_SAFE;
 	let cookie_string = cookie.value();
-	let decoded_cookie = base64_decoder.decode(cookie_string).unwrap();
-	let result = sqlx::query!("DELETE FROM session_tokens WHERE token=$1;", decoded_cookie)
-		.execute(db_pool)
-		.await;
+	let token = base64_decoder
+		.decode(cookie_string)
+		.map_err(|_| badRequest!("Session token is invalid base64"))?;
+	let token_hash = session_token_hash(&token)?;
+	let result = sqlx::query!(
+		"DELETE FROM session_tokens WHERE token_hash=$1;",
+		token_hash.to_string()
+	)
+	.execute(db_pool)
+	.await;
 	check_errors(result)
 }
 
