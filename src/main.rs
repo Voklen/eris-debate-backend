@@ -1,45 +1,15 @@
-mod database;
-mod errors;
-
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
-use database::init_app_state;
+use eris::database::init_app_state;
 use log::info;
-use sqlx::PgPool;
 
-#[path = "helper/arguments.rs"]
-mod arguments_helper;
-#[path = "endpoints/arguments/get.rs"]
-mod get_arguments;
-#[path = "helper/hashing.rs"]
-mod hashing_helper;
-#[path = "endpoints/login.rs"]
-mod login;
-#[path = "endpoints/logout.rs"]
-mod logout;
-#[path = "endpoints/arguments/post.rs"]
-mod post_arguments;
-#[path = "helper/session.rs"]
-mod session_helper;
-#[path = "endpoints/signup.rs"]
-mod signup;
-#[path = "endpoints/topic.rs"]
-mod topic;
-#[path = "endpoints/topics.rs"]
-mod topics;
-
-use get_arguments::get_arguments_endpoint;
-use login::login_endpoint;
-use logout::logout_endpoint;
-use post_arguments::post_arguments_endpoint;
-use signup::signup_endpoint;
-use topic::topic_endpoint;
-use topics::topics_endpoint;
-
-#[derive(Clone)]
-struct AppState {
-	dbpool: PgPool,
-}
+use eris::get_arguments::get_arguments_endpoint;
+use eris::login::login_endpoint;
+use eris::logout::logout_endpoint;
+use eris::post_arguments::post_arguments_endpoint;
+use eris::signup::signup_endpoint;
+use eris::topic::topic_endpoint;
+use eris::topics::topics_endpoint;
 
 const PORT: u16 = 9000;
 
