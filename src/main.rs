@@ -3,6 +3,7 @@ use actix_web::{http, web, App, HttpServer};
 use eris::database::init_app_state;
 use log::info;
 
+use eris::delete_arguments_endpoint::delete_arguments_endpoint;
 use eris::get_arguments::get_arguments_endpoint;
 use eris::login::login_endpoint;
 use eris::logout::logout_endpoint;
@@ -26,6 +27,7 @@ async fn main() -> std::io::Result<()> {
 			.service(login_endpoint)
 			.service(get_arguments_endpoint)
 			.service(post_arguments_endpoint)
+			.service(delete_arguments_endpoint)
 			.service(logout_endpoint)
 			.service(topics_endpoint)
 	})

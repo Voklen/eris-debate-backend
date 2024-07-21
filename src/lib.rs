@@ -8,8 +8,12 @@ pub struct AppState {
 pub mod database;
 pub mod errors;
 
+#[path = "helper/admin.rs"]
+pub mod admin_helper;
 #[path = "helper/arguments.rs"]
 pub mod arguments_helper;
+#[path = "endpoints/arguments/delete.rs"]
+pub mod delete_arguments_endpoint;
 #[path = "endpoints/arguments/get.rs"]
 pub mod get_arguments;
 #[path = "helper/hashing.rs"]
