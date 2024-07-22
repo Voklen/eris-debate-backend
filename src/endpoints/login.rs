@@ -45,15 +45,17 @@ async fn login_endpoint(
 		.same_site(actix_web::cookie::SameSite::None)
 		.http_only(true)
 		.finish();
+	let roles = get_roles(stored_user.id, &app_state.dbpool).await;
 	let body = json!({
-		"username": stored_user.username
+		"username": stored_user.username,
+		"roles": roles,
 	});
 	HttpResponse::Ok().cookie(cookie).body(body.to_string())
 }
 
 async fn get_id_and_password(email: &str, db_pool: &PgPool) -> Result<User, HttpResponse> {
 	let result = sqlx::query!(
-		"SELECT id, username, password_hash FROM users WHERE email=$1;",
+		"SELECT id, username, password_hash FROM users WHERE email = $1",
 		email
 	)
 	.fetch_one(db_pool)
@@ -80,7 +82,7 @@ async fn create_session_token(id: i64, db_pool: &PgPool) -> Result<String, HttpR
 	let token_hash = session_token_hash(&token)?;
 
 	let result = sqlx::query!(
-		"INSERT INTO session_tokens(id, token_hash) VALUES ($1, $2);",
+		"INSERT INTO session_tokens(id, token_hash) VALUES ($1, $2)",
 		id,
 		token_hash.to_string()
 	)
@@ -89,6 +91,21 @@ async fn create_session_token(id: i64, db_pool: &PgPool) -> Result<String, HttpR
 	check_errors(result)?;
 	let base64_encoder = engine::general_purpose::URL_SAFE;
 	Ok(base64_encoder.encode(token))
+}
+
+async fn get_roles(id: i64, db_pool: &PgPool) -> Vec<String> {
+	let result = sqlx::query!("SELECT role FROM roles WHERE id = $1", id)
+		.fetch_all(db_pool)
+		.await;
+	match result {
+		Ok(res) => res.into_iter().map(|r| r.role).collect(),
+		Err(e) => {
+			error!("Unexpected error in getting roles(id={id}): {e}");
+			// Silently ignore this error, to keep everything working
+			// while I work out what's going on
+			Vec::new()
+		}
+	}
 }
 
 fn check_errors(result: Result<PgQueryResult, sqlx::Error>) -> Result<(), HttpResponse> {
