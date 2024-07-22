@@ -42,5 +42,5 @@ fn get_cors() -> Cors {
 		.allowed_origin("http://localhost:3000")
 		.allowed_header(http::header::CONTENT_TYPE)
 		.supports_credentials()
-		.allowed_methods(["GET", "POST"])
+		.allowed_methods(["GET", "POST", "DELETE"])
 }
