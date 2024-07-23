@@ -66,14 +66,20 @@ async fn get_topic_arguments(topic_id: i64, db_pool: &PgPool) -> Result<Topic, H
 			topics.name AS topic_name,
 			for_argument.id AS for_id,
 			for_argument.body AS for_body,
+			for_user.username AS for_username,
 			against_argument.id AS against_id,
-			against_argument.body AS against_body
+			against_argument.body AS against_body,
+			against_user.username AS against_username
 		FROM
 			topics
 		JOIN
 			arguments AS for_argument ON topics.for_argument = for_argument.id
 		JOIN
 			arguments AS against_argument ON topics.against_argument = against_argument.id
+		JOIN
+			users AS for_user ON for_argument.created_by = for_user.id
+		JOIN
+			users AS against_user ON against_argument.created_by = against_user.id
 		WHERE
 			topics.id = $1;
 		",
@@ -92,10 +98,12 @@ async fn get_topic_arguments(topic_id: i64, db_pool: &PgPool) -> Result<Topic, H
 	let for_argument = TopArgument {
 		id: res.for_id,
 		body: res.for_body,
+		username: res.for_username,
 	};
 	let against_argument = TopArgument {
 		id: res.against_id,
 		body: res.against_body,
+		username: res.against_username,
 	};
 	Ok(Topic {
 		name: res.topic_name,
