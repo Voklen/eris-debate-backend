@@ -1,3 +1,4 @@
+use crate::email_helper::send_email;
 use crate::hashing_helper::hash_string;
 use crate::AppState;
 use crate::{badRequest, internalServerError};
@@ -31,6 +32,11 @@ async fn signup_endpoint(
 	)
 	.execute(&app_state.dbpool)
 	.await;
+	send_email(
+		&request.email,
+		"Confirmation",
+		"This is a test of confirmation emails".to_owned(),
+	);
 	check_errors(result)
 }
 

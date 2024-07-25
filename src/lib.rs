@@ -14,6 +14,8 @@ pub mod admin_helper;
 pub mod arguments_helper;
 #[path = "endpoints/arguments/delete.rs"]
 pub mod delete_arguments_endpoint;
+#[path = "helper/email.rs"]
+pub mod email_helper;
 #[path = "endpoints/arguments/get.rs"]
 pub mod get_arguments;
 #[path = "helper/hashing.rs"]
