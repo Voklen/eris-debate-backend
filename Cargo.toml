@@ -19,6 +19,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "macro
 # Cryptography
 argon2 = "0.5"
 base64 = "0.21"
+rand = "0.8"
 
 # Configuration & logging
 dotenv = "0.15"

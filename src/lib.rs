@@ -34,3 +34,5 @@ pub mod signup;
 pub mod topic;
 #[path = "endpoints/topics.rs"]
 pub mod topics;
+#[path = "endpoints/verify_email.rs"]
+pub mod verify_email;

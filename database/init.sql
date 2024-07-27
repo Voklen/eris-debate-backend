@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS users(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	email TEXT NOT NULL UNIQUE,
 	username TEXT NOT NULL UNIQUE,
-	password_hash TEXT NOT NULL
+	password_hash TEXT NOT NULL,
+	verification_token TEXT
 );
 CREATE TABLE IF NOT EXISTS session_tokens(
 	id BIGINT NOT NULL REFERENCES users(id)

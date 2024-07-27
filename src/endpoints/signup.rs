@@ -4,6 +4,7 @@ use crate::AppState;
 use crate::{badRequest, internalServerError};
 use actix_web::{post, web, HttpResponse, Responder};
 use log::warn;
+use rand::distributions::{Alphanumeric, DistString};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::postgres::PgQueryResult;
@@ -24,18 +25,21 @@ async fn signup_endpoint(
 		Ok(res) => res,
 		Err(e) => return e,
 	};
+	// Generate a random token with `thread_rng` which is cryptographically secure
+	let verification_token = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
 	let result = sqlx::query!(
-		"INSERT INTO users(email, username, password_hash) VALUES ($1, $2, $3);",
+		"INSERT INTO users(email, username, password_hash, verification_token) VALUES ($1, $2, $3, $4);",
 		request.email,
 		request.username,
-		password_hash.as_str()
+		password_hash.as_str(),
+		verification_token,
 	)
 	.execute(&app_state.dbpool)
 	.await;
 	send_email(
 		&request.email,
-		"Confirmation",
-		"This is a test of confirmation emails".to_owned(),
+		"Confirm account",
+		format!("Your verification token is: {verification_token}"),
 	);
 	check_errors(result)
 }

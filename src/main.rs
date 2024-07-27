@@ -11,6 +11,7 @@ use eris::post_arguments::post_arguments_endpoint;
 use eris::signup::signup_endpoint;
 use eris::topic::topic_endpoint;
 use eris::topics::topics_endpoint;
+use eris::verify_email::verify_email_endpoint;
 
 const PORT: u16 = 9000;
 
@@ -30,6 +31,7 @@ async fn main() -> std::io::Result<()> {
 			.service(delete_arguments_endpoint)
 			.service(logout_endpoint)
 			.service(topics_endpoint)
+			.service(verify_email_endpoint)
 	})
 	.bind(("0.0.0.0", PORT))?
 	.run();
