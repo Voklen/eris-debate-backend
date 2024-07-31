@@ -1,3 +1,5 @@
+use std::env;
+
 use crate::email_helper::send_email;
 use crate::hashing_helper::hash_string;
 use crate::{badRequest, internalServerError};
@@ -71,10 +73,21 @@ async fn send_verification_email(
 		}
 	};
 
+	let frontend_url = env::var("FRONTEND_URL").expect("FRONTEND_URL should be set");
+
 	let success = send_email(
 		email,
 		"Confirm account",
-		format!("Your verification token is: {verification_token}"),
+		format!(
+			"
+Your verification token is: {verification_token}
+Please click this link to verify your email: {frontend_url}/verifyemail?token={verification_token}
+
+If you did not sign up for {frontend_url} please ignore this email and do not click the link above.
+
+Thank you!
+			"
+		),
 	);
 	if success {
 		Ok(())
