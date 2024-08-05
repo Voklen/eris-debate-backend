@@ -1,39 +1,28 @@
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
-use eris::database::init_app_state;
+use eris::*;
 use log::info;
-
-use eris::delete_argument::delete_arguments_endpoint;
-use eris::get_arguments::get_arguments_endpoint;
-use eris::login::login_endpoint;
-use eris::logout::logout_endpoint;
-use eris::post_argument::post_arguments_endpoint;
-use eris::put_argument::put_arguments_endpoint;
-use eris::signup::signup_endpoint;
-use eris::topic::topic_endpoint;
-use eris::topics::topics_endpoint;
-use eris::verify_email::verify_email_endpoint;
 
 const PORT: u16 = 9000;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 	env_logger::init();
-	let app_state = init_app_state().await;
+	let app_state = database::init_app_state().await;
 	let server = HttpServer::new(move || {
 		App::new()
 			.app_data(web::Data::new(app_state.clone()))
 			.wrap(get_cors())
-			.service(topic_endpoint)
-			.service(signup_endpoint)
-			.service(login_endpoint)
-			.service(get_arguments_endpoint)
-			.service(post_arguments_endpoint)
-			.service(put_arguments_endpoint)
-			.service(delete_arguments_endpoint)
-			.service(logout_endpoint)
-			.service(topics_endpoint)
-			.service(verify_email_endpoint)
+			.service(topic::topic_endpoint)
+			.service(signup::signup_endpoint)
+			.service(login::login_endpoint)
+			.service(get_arguments::get_arguments_endpoint)
+			.service(post_argument::post_arguments_endpoint)
+			.service(put_argument::put_arguments_endpoint)
+			.service(delete_argument::delete_arguments_endpoint)
+			.service(logout::logout_endpoint)
+			.service(topics::topics_endpoint)
+			.service(verify_email::verify_email_endpoint)
 	})
 	.bind(("0.0.0.0", PORT))?
 	.run();
