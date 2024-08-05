@@ -16,6 +16,8 @@ pub mod arguments_helper;
 pub mod delete_argument;
 #[path = "helper/email.rs"]
 pub mod email_helper;
+#[path = "helper/general.rs"]
+pub mod general_helper;
 #[path = "endpoints/arguments/get.rs"]
 pub mod get_arguments;
 #[path = "helper/hashing.rs"]

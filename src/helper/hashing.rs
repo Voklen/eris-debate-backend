@@ -1,6 +1,4 @@
-use std::env;
-
-use crate::internalServerError;
+use crate::{general_helper::get_env, internalServerError};
 use actix_web::HttpResponse;
 use argon2::{
 	password_hash::{rand_core::OsRng, PasswordHashString, SaltString},
@@ -27,13 +25,13 @@ pub fn hash_string(input: &str) -> Result<PasswordHashString, HttpResponse> {
 
 pub fn session_token_hash(input: &[u8]) -> Result<PasswordHashString, HttpResponse> {
 	let argon2 = Argon2::default();
-	let pepper =
-		env::var("SESSION_TOKEN_PEPPER").expect("env variable SESSION_TOKEN_PEPPER should be set");
+	let pepper_env_var = "SESSION_TOKEN_PEPPER";
+	let pepper = get_env(&pepper_env_var);
 	// Use pepper as salt
 	let pepper_as_salt = match SaltString::from_b64(&pepper) {
 		Ok(salt) => salt,
 		Err(e) => {
-			error!("SESSION_TOKEN_PEPPER cannot be parsed: {e}");
+			error!("{pepper_env_var} cannot be parsed: {e}");
 			return Err(internalServerError!("Bad server hashing configuration"));
 		}
 	};

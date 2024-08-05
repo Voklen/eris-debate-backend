@@ -1,10 +1,10 @@
-use std::env;
-
 use lettre::message::header::ContentType;
 use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use log::{error, warn};
+
+use crate::general_helper::get_env;
 
 /// Sends an email using SMTP info from the environment variables.
 /// Returns true on success and false on failure. The reasoning behind this is
@@ -62,9 +62,4 @@ pub fn send_email(to_address: &str, subject: &str, body: String) -> bool {
 			false
 		}
 	}
-}
-
-fn get_env(var_name: &str) -> String {
-	let msg = format!("env variable {var_name} should be set");
-	env::var(var_name).expect(&msg)
 }

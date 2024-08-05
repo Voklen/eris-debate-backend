@@ -1,6 +1,5 @@
-use std::env;
-
 use crate::email_helper::send_email;
+use crate::general_helper::get_env;
 use crate::hashing_helper::hash_string;
 use crate::{badRequest, internalServerError};
 use crate::{unwrap_or_esalate, AppState};
@@ -73,7 +72,7 @@ async fn send_verification_email(
 		}
 	};
 
-	let frontend_url = env::var("FRONTEND_URL").expect("FRONTEND_URL should be set");
+	let frontend_url = get_env("FRONTEND_URL");
 
 	let success = send_email(
 		email,
