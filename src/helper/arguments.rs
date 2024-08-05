@@ -10,7 +10,6 @@ use crate::{badRequest, internalServerError};
 pub struct TopArgument {
 	pub id: i64,
 	pub body: String,
-	pub username: String,
 }
 
 pub async fn get_response_arguments(
@@ -18,7 +17,12 @@ pub async fn get_response_arguments(
 	db_pool: &PgPool,
 ) -> Result<Rc<[TopArgument]>, HttpResponse> {
 	let result = sqlx::query!(
-		"SELECT arguments.id, users.username, body FROM arguments JOIN users ON arguments.created_by = users.id WHERE parent = $1",
+		"
+		SELECT arguments.id, revisions.body
+		FROM arguments
+		JOIN revisions ON arguments.revision_latest = revisions.id
+		WHERE parent = $1
+		",
 		argument_id
 	)
 	.fetch_all(db_pool)
@@ -36,7 +40,6 @@ pub async fn get_response_arguments(
 		.map(|arg| TopArgument {
 			id: arg.id,
 			body: arg.body,
-			username: arg.username,
 		})
 		.collect();
 	Ok(arg_vec)

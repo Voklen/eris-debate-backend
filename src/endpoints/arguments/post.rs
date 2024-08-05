@@ -26,15 +26,22 @@ async fn post_arguments_endpoint(
 }
 
 async fn create_argument(
-	id: i64,
+	user_id: i64,
 	request: web::Json<ArgumentsRequest>,
 	db_pool: &PgPool,
 ) -> Result<(), HttpResponse> {
 	let result = sqlx::query!(
-		"INSERT INTO arguments (parent, body, created_by) VALUES ($1, $2, $3)",
+		"
+		WITH new_rev AS (
+			INSERT INTO revisions (body, revision_by) VALUES ($2, $3) RETURNING id
+		)
+		INSERT INTO arguments (revision_latest, parent)
+		SELECT id, $1
+		FROM new_rev;
+		",
 		request.parent,
 		request.body,
-		id,
+		user_id,
 	)
 	.execute(db_pool)
 	.await;
