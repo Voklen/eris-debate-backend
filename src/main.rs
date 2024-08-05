@@ -3,11 +3,12 @@ use actix_web::{http, web, App, HttpServer};
 use eris::database::init_app_state;
 use log::info;
 
-use eris::delete_arguments_endpoint::delete_arguments_endpoint;
+use eris::delete_argument::delete_arguments_endpoint;
 use eris::get_arguments::get_arguments_endpoint;
 use eris::login::login_endpoint;
 use eris::logout::logout_endpoint;
-use eris::post_arguments::post_arguments_endpoint;
+use eris::post_argument::post_arguments_endpoint;
+use eris::put_argument::put_arguments_endpoint;
 use eris::signup::signup_endpoint;
 use eris::topic::topic_endpoint;
 use eris::topics::topics_endpoint;
@@ -28,6 +29,7 @@ async fn main() -> std::io::Result<()> {
 			.service(login_endpoint)
 			.service(get_arguments_endpoint)
 			.service(post_arguments_endpoint)
+			.service(put_arguments_endpoint)
 			.service(delete_arguments_endpoint)
 			.service(logout_endpoint)
 			.service(topics_endpoint)
@@ -44,5 +46,5 @@ fn get_cors() -> Cors {
 		.allowed_origin("http://localhost:3000")
 		.allowed_header(http::header::CONTENT_TYPE)
 		.supports_credentials()
-		.allowed_methods(["GET", "POST", "DELETE"])
+		.allowed_methods(["GET", "POST", "PUT", "DELETE"])
 }

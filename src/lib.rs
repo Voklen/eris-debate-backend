@@ -13,7 +13,7 @@ pub mod admin_helper;
 #[path = "helper/arguments.rs"]
 pub mod arguments_helper;
 #[path = "endpoints/arguments/delete.rs"]
-pub mod delete_arguments_endpoint;
+pub mod delete_argument;
 #[path = "helper/email.rs"]
 pub mod email_helper;
 #[path = "endpoints/arguments/get.rs"]
@@ -25,7 +25,9 @@ pub mod login;
 #[path = "endpoints/logout.rs"]
 pub mod logout;
 #[path = "endpoints/arguments/post.rs"]
-pub mod post_arguments;
+pub mod post_argument;
+#[path = "endpoints/arguments/put.rs"]
+pub mod put_argument;
 #[path = "helper/session.rs"]
 pub mod session_helper;
 #[path = "endpoints/signup.rs"]
