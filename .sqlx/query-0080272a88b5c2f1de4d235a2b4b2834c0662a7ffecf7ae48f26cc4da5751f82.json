@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tWITH prev_rev_id AS (\n\t\t\tSELECT revision_latest AS id FROM arguments WHERE id = $1\n\t\t), new_rev AS (\n\t\t\tINSERT INTO revisions (body, revision_by, prev_revision) VALUES ($2, $3, (SELECT id FROM prev_rev_id)) RETURNING id\n\t\t)\n\t\tUPDATE arguments\n\t\tSET revision_latest = new_rev.id\n\t\tFROM new_rev\n\t\tWHERE arguments.id = $1\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0080272a88b5c2f1de4d235a2b4b2834c0662a7ffecf7ae48f26cc4da5751f82"
+}

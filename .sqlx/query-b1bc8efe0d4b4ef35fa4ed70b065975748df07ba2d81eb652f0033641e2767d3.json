@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tWITH new_rev AS (\n\t\t\tINSERT INTO revisions (body, revision_by) VALUES ($2, $3) RETURNING id\n\t\t)\n\t\tINSERT INTO arguments (revision_latest, parent)\n\t\tSELECT id, $1\n\t\tFROM new_rev;\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b1bc8efe0d4b4ef35fa4ed70b065975748df07ba2d81eb652f0033641e2767d3"
+}

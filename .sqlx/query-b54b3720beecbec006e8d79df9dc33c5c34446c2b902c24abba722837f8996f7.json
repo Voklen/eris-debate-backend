@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tSELECT arguments.id, revisions.body\n\t\tFROM arguments\n\t\tJOIN revisions ON arguments.revision_latest = revisions.id\n\t\tWHERE parent = $1\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "body",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "b54b3720beecbec006e8d79df9dc33c5c34446c2b902c24abba722837f8996f7"
+}

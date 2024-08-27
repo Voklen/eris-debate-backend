@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\tSELECT\n\t\t\ttopics.name AS topic_name,\n\t\t\tfor_argument.id AS for_id,\n\t\t\tfor_revision.body AS for_body,\n\t\t\tagainst_argument.id AS against_id,\n\t\t\tagainst_revision.body AS against_body\n\t\tFROM\n\t\t\ttopics\n\t\tJOIN\n\t\t\targuments AS for_argument ON topics.for_argument = for_argument.id\n\t\tJOIN\n\t\t\targuments AS against_argument ON topics.against_argument = against_argument.id\n\t\tJOIN\n\t\t\trevisions AS for_revision ON for_argument.revision_latest = for_revision.id\n\t\tJOIN\n\t\t\trevisions AS against_revision ON against_argument.revision_latest = against_revision.id\n\t\tWHERE\n\t\t\ttopics.id = $1;\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "topic_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "for_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "for_body",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "against_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "against_body",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3291f2885cab93cf21f73e194cf6bcf184ac3ab763b421ca71c883b874110656"
+}
