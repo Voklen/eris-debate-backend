@@ -1,6 +1,5 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use log::warn;
-use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 use tokio::try_join;
@@ -10,29 +9,28 @@ use crate::{
 	badRequest, internalServerError, unwrap_or_esalate, AppState,
 };
 
-#[derive(Deserialize)]
-struct ArgumentsRequest {
-	id: i64,
-}
-
 struct Topic {
 	name: String,
 	for_argument: TopArgument,
 	against_argument: TopArgument,
 }
 
-#[get("/topic")]
-async fn topic_endpoint(
-	title_req: web::Query<ArgumentsRequest>,
-	app_state: web::Data<AppState>,
-) -> impl Responder {
-	let id = title_req.id;
-	let body_result = get_body(id, &app_state.dbpool).await;
-	let body = unwrap_or_esalate!(body_result);
-	HttpResponse::Ok().body(body)
+#[get("/topic/{topic_id}")]
+async fn topic_endpoint(path: web::Path<String>, app_state: web::Data<AppState>) -> impl Responder {
+	let id = unwrap_or_esalate!(get_id(path));
+	let topic_result = get_topic(id, &app_state.dbpool).await;
+	let topic = unwrap_or_esalate!(topic_result);
+	HttpResponse::Ok().body(topic)
 }
 
-async fn get_body(id: i64, dbpool: &PgPool) -> Result<String, HttpResponse> {
+fn get_id(path: web::Path<String>) -> Result<i64, HttpResponse> {
+	match path.parse() {
+		Ok(id) => Ok(id),
+		Err(e) => Err(badRequest!("Invalid topic id: {e}")),
+	}
+}
+
+async fn get_topic(id: i64, dbpool: &PgPool) -> Result<String, HttpResponse> {
 	let topic = get_topic_arguments(id, dbpool).await?;
 
 	// The arguments against are all those that respond to the for argument
