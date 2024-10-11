@@ -16,7 +16,10 @@ struct Topic {
 }
 
 #[get("/topic/{topic_id}")]
-async fn topic_endpoint(path: web::Path<String>, app_state: web::Data<AppState>) -> impl Responder {
+async fn get_topic_endpoint(
+	path: web::Path<String>,
+	app_state: web::Data<AppState>,
+) -> impl Responder {
 	let id = unwrap_or_esalate!(get_id(path));
 	let topic_result = get_topic(id, &app_state.dbpool).await;
 	let topic = unwrap_or_esalate!(topic_result);

@@ -20,6 +20,8 @@ pub mod email_helper;
 pub mod general_helper;
 #[path = "endpoints/arguments/get.rs"]
 pub mod get_arguments;
+#[path = "endpoints/topic/get.rs"]
+pub mod get_topic;
 #[path = "helper/hashing.rs"]
 pub mod hashing_helper;
 #[path = "endpoints/login.rs"]
@@ -28,14 +30,14 @@ pub mod login;
 pub mod logout;
 #[path = "endpoints/arguments/post.rs"]
 pub mod post_argument;
+#[path = "endpoints/topic/post.rs"]
+pub mod post_topic;
 #[path = "endpoints/arguments/put.rs"]
 pub mod put_argument;
 #[path = "helper/session.rs"]
 pub mod session_helper;
 #[path = "endpoints/signup.rs"]
 pub mod signup;
-#[path = "endpoints/topic.rs"]
-pub mod topic;
 #[path = "endpoints/topics.rs"]
 pub mod topics;
 #[path = "endpoints/verify_email.rs"]
