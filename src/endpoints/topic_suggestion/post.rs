@@ -14,7 +14,7 @@ struct TopicPostRequest {
 }
 
 #[post("/topic")]
-async fn post_topic_endpoint(
+async fn post_topic_suggestion_endpoint(
 	json: web::Json<TopicPostRequest>,
 	req: actix_web::HttpRequest,
 	app_state: web::Data<AppState>,

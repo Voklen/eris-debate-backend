@@ -30,8 +30,8 @@ pub mod login;
 pub mod logout;
 #[path = "endpoints/arguments/post.rs"]
 pub mod post_argument;
-#[path = "endpoints/topic/post.rs"]
-pub mod post_topic;
+#[path = "endpoints/topic_suggestion/post.rs"]
+pub mod post_topic_suggestion;
 #[path = "endpoints/arguments/put.rs"]
 pub mod put_argument;
 #[path = "helper/session.rs"]

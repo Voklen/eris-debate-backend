@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
 			.app_data(web::Data::new(app_state.clone()))
 			.wrap(get_cors())
 			.service(get_topic::get_topic_endpoint)
-			.service(post_topic::post_topic_endpoint)
+			.service(post_topic_suggestion::post_topic_suggestion_endpoint)
 			.service(signup::signup_endpoint)
 			.service(login::login_endpoint)
 			.service(get_arguments::get_arguments_endpoint)
