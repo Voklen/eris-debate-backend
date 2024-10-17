@@ -34,6 +34,8 @@ pub mod post_argument;
 pub mod post_topic_suggestion;
 #[path = "endpoints/arguments/put.rs"]
 pub mod put_argument;
+#[path = "endpoints/topic_suggestion/put.rs"]
+pub mod put_topic_suggestion;
 #[path = "helper/session.rs"]
 pub mod session_helper;
 #[path = "endpoints/signup.rs"]

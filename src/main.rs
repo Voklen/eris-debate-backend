@@ -19,6 +19,7 @@ async fn main() -> std::io::Result<()> {
 			.wrap(get_cors())
 			.service(get_topic::get_topic_endpoint)
 			.service(post_topic_suggestion::post_topic_suggestion_endpoint)
+			.service(put_topic_suggestion::put_topic_suggestion_endpoint)
 			.service(signup::signup_endpoint)
 			.service(login::login_endpoint)
 			.service(get_arguments::get_arguments_endpoint)
