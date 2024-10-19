@@ -1,4 +1,4 @@
-use actix_web::{put, web, HttpResponse, Responder};
+use actix_web::{patch, web, HttpResponse, Responder};
 use log::warn;
 use serde::Deserialize;
 use sqlx::{postgres::PgQueryResult, PgPool};
@@ -21,8 +21,8 @@ struct TopicPutRequest {
 	action: Action,
 }
 
-#[put("/topic_suggestion/{proposal_id}")]
-async fn put_topic_suggestion_endpoint(
+#[patch("/topic-proposals/{proposal_id}")]
+async fn patch_topic_proposals(
 	json: web::Json<TopicPutRequest>,
 	proposal_id: web::Path<String>,
 	req: actix_web::HttpRequest,

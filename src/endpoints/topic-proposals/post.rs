@@ -13,8 +13,8 @@ struct TopicPostRequest {
 	reason: String,
 }
 
-#[post("/topic")]
-async fn post_topic_suggestion_endpoint(
+#[post("/topic-proposals")]
+async fn post_topic_proposals(
 	json: web::Json<TopicPostRequest>,
 	req: actix_web::HttpRequest,
 	app_state: web::Data<AppState>,
