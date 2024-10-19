@@ -10,7 +10,9 @@ use crate::{
 
 #[derive(Deserialize)]
 enum Action {
+	#[serde(rename = "accept")]
 	Accept,
+	#[serde(rename = "reject")]
 	Reject,
 }
 
