@@ -1,7 +1,7 @@
 use std::env;
 
 use actix_cors::Cors;
-use actix_web::{http, web, App, HttpServer};
+use actix_web::{http, middleware, web, App, HttpServer};
 use eris::*;
 use general_helper::get_env;
 use log::info;
@@ -15,6 +15,7 @@ async fn main() -> std::io::Result<()> {
 	let app_state = database::init_app_state().await;
 	let server = HttpServer::new(move || {
 		App::new()
+			.wrap(middleware::Logger::default())
 			.app_data(web::Data::new(app_state.clone()))
 			.wrap(get_cors())
 			.service(get_topic::get_topic_endpoint)
