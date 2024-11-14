@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\t\tWITH proposal AS (\n\t\t\t\tSELECT name, for_argument, against_argument\n\t\t\t\tFROM topic_proposals\n\t\t\t\tWHERE id = $1\n\t\t\t),\n\t\t\tnew_for_rev AS (\n\t\t\t\tINSERT INTO revisions (body, revision_by)\n\t\t\t\tSELECT for_argument, $2 FROM proposal\n\t\t\t\tRETURNING id\n\t\t\t),\n\t\t\tnew_for_arg AS (\n\t\t\t\tINSERT INTO arguments (revision_latest)\n\t\t\t\tSELECT id FROM new_for_rev\n\t\t\t\tRETURNING id\n\t\t\t),\n\t\t\tnew_against_rev AS (\n\t\t\t\tINSERT INTO revisions (body, revision_by)\n\t\t\t\tSELECT against_argument, $2 FROM proposal\n\t\t\t\tRETURNING id\n\t\t\t),\n\t\t\tnew_against_arg AS (\n\t\t\t\tINSERT INTO arguments (revision_latest)\n\t\t\t\tSELECT id FROM new_against_rev\n\t\t\t\tRETURNING id\n\t\t\t)\n\t\t\tINSERT INTO topics (name, for_argument, against_argument)\n\t\t\tSELECT proposal.name, new_for_arg.id, new_against_arg.id\n\t\t\tFROM proposal, new_for_arg, new_against_arg;\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "460d821d5784063e61b86137c4b4160d59e8eb5704368fbd66425f2b274e66d7"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n\t\t\tWITH user_details AS (\n\t\t\t\tSELECT email, username, password_hash\n\t\t\t\tFROM unverified_users\n\t\t\t\tWHERE id = $1\n\t\t\t)\n\t\t\tINSERT INTO users(email, username, password_hash)\n\t\t\tSELECT user_details.email, user_details.username, user_details.password_hash\n\t\t\tFROM user_details\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6cb0408e70c99179303ba6df28e20d40dc5dd8f6943610f7bc6b5308600ca115"
+}

@@ -27,7 +27,7 @@ async fn signup_endpoint(
 		Err(e) => return e,
 	};
 	let result = sqlx::query!(
-		"INSERT INTO users(email, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
+		"INSERT INTO unverified_users(email, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
 		request.email,
 		request.username,
 		password_hash.as_str(),

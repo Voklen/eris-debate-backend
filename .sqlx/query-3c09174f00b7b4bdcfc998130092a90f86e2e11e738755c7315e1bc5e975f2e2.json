@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE users SET email_verified = true WHERE id = $1",
+  "query": "DELETE FROM unverified_users WHERE id=$1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -10,5 +10,5 @@
     },
     "nullable": []
   },
-  "hash": "b1a4e2dc9578c3aad054ebacf00a7e804dc0aa4f0a4a283683ad1ce6a77d4f6a"
+  "hash": "3c09174f00b7b4bdcfc998130092a90f86e2e11e738755c7315e1bc5e975f2e2"
 }
