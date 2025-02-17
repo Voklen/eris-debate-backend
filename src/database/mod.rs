@@ -4,6 +4,9 @@ use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use crate::{general_helper::get_env, AppState};
 
+pub mod arguments;
+pub mod topic;
+
 pub async fn init_app_state() -> AppState {
 	dotenv().ok();
 	let dbpool = get_pool().await;

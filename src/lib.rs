@@ -10,8 +10,6 @@ pub mod errors;
 
 #[path = "helper/admin.rs"]
 pub mod admin_helper;
-#[path = "helper/arguments.rs"]
-pub mod arguments_helper;
 #[path = "endpoints/arguments/delete.rs"]
 pub mod delete_argument;
 #[path = "helper/email.rs"]

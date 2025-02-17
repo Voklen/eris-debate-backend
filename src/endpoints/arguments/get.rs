@@ -1,7 +1,7 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use serde_json::json;
 
-use crate::{arguments_helper::get_response_arguments, badRequest, unwrap_or_esalate, AppState};
+use crate::{badRequest, database::arguments::get_response_arguments, unwrap_or_esalate, AppState};
 
 #[get("/arguments/{parent_id}")]
 async fn get_arguments_endpoint(

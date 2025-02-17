@@ -7,7 +7,7 @@ use std::rc::Rc;
 use crate::{badRequest, internalServerError};
 
 #[derive(Serialize)]
-pub struct TopArgument {
+pub struct Argument {
 	pub id: i64,
 	pub body: String,
 }
@@ -15,7 +15,7 @@ pub struct TopArgument {
 pub async fn get_response_arguments(
 	argument_id: i64,
 	db_pool: &PgPool,
-) -> Result<Rc<[TopArgument]>, HttpResponse> {
+) -> Result<Rc<[Argument]>, HttpResponse> {
 	let result = sqlx::query!(
 		"
 		SELECT arguments.id, revisions.body
@@ -37,7 +37,7 @@ pub async fn get_response_arguments(
 	}?;
 	let arg_vec = res
 		.into_iter()
-		.map(|arg| TopArgument {
+		.map(|arg| Argument {
 			id: arg.id,
 			body: arg.body,
 		})
