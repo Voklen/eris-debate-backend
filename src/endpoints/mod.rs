@@ -1,0 +1,20 @@
+pub mod login;
+pub mod logout;
+pub mod signup;
+pub mod topics;
+pub mod verify_email;
+
+#[path = "arguments/delete.rs"]
+pub mod delete_argument;
+#[path = "arguments/get.rs"]
+pub mod get_arguments;
+#[path = "topic/get.rs"]
+pub mod get_topic;
+#[path = "topic-proposals/patch.rs"]
+pub mod patch_topic_proposals;
+#[path = "arguments/post.rs"]
+pub mod post_argument;
+#[path = "topic-proposals/post.rs"]
+pub mod post_topic_proposals;
+#[path = "arguments/put.rs"]
+pub mod put_argument;
